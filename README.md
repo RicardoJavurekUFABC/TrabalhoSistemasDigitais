@@ -1,6 +1,6 @@
 # Tutorial: Implementação de Somador Ponto Flutuante na DE10-Lite
 
-**Autores:** Ricardo Javurek Rihan, [Nome do Aluno 2], , [Nome do Aluno 3]
+**Autores:** Ricardo Javurek Rihan, [Nome do Aluno 2], , Paloma Valéria Campos de Lima.
 
 **Disciplina:** Sistemas Digitais Q2.20026
 
@@ -61,4 +61,4 @@ Utilizamos o [ChatGPT/Claude/Gemini] para auxiliar na geração do Testbench e n
 Utilize a taxonomia CRediT, seguem exemplos:
  * Ricardo Javurek Rihan, Administração do Projeto, Desenvolvimento, implementação e teste de software, Análise Formal, Validação de dados e experimentos
  * [Nome do Aluno 2], Administração do Projeto, Desenvolvimento,  Análise Formal, Validação de dados e experimentos, Redação do manuscrito original
- * [Nome do Aluno 3], Administração do Projeto, Desenvolvimento, implementação e teste de software, Validação de dados e experimentos, Redação do manuscrito original
+ * Paloma Valéria Campos de Lima, Administração do Projeto, Desenvolvimento, implementação e teste de software, Validação de dados e experimentos, Redação do manuscrito original
