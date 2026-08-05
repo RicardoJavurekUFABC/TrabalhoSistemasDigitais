@@ -37,7 +37,7 @@ Abaixo, a imagem do funcionamento do 4º estágio (normalização). Considerar o
 
 ### Código VHDL Final
 
-** TrabalhoFinal2.vhd -> Responsável por salvar em memória os dois operandos ao clicar os KEY0 e KEY1
+** TrabalhoFinal2.vhd -> Responsável por salvar em memória os dois operandos ao clicar os KEY0 e KEY1 e implementa o Somador Principal (Trabalho_Final.vhd)
 ```vhdl
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -147,7 +147,7 @@ begin
 end architecture rtl;
 ```
 
-**Trabalho_Final.vhd -> Responsável pela lógica do Somado Principal (É instanciado no Trabalho_Final2.vhdl)
+**Trabalho_Final.vhd -> Responsável pela lógica do Somador Principal (É instanciado no Trabalho_Final2.vhdl)
 ```vhdl
 library ieee;
 use ieee.std_logic_1164.all;
