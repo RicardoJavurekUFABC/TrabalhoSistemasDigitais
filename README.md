@@ -7,37 +7,34 @@
 **Data:** 09/08/2026
 
 ---
-*Etapa 1*
 ## 1. Objetivo do Projeto
 Este projeto adapta o somador de ponto flutuante simplificado (13 bits) do livro-texto para a placa Terasic DE10-Lite (MAX 10). O objetivo é demonstrar a síntese lógica e a simulação de hardware usando VHDL.
 
 ## 2. Descrição gráfica do funcionamento do sistema
-Usar os elementos necessários para descrever o fucnionamento, isto é, tabelas verdade, diagramas de estados, etc.
-Usar as variáveis de entrada e saída especificadas no VHDL.
+<img width="1291" height="692" alt="image" src="https://github.com/user-attachments/assets/71b5fb04-97a8-4e8a-972f-61212b9c0027" />
 
-*Etapa 2*
+<img width="694" height="922" alt="image" src="https://github.com/user-attachments/assets/8fa43f4e-6417-4d3e-b88a-c2cf24453cee" />
+
+
 ## 3. Adaptações de Hardware (DE10-Lite)
-Indicar o que a arquitetura original usava e quais mudanças foram feitas para a implementação na placa
+A arquitetura original do livro-texto pressupõe a entrada simultânea de todos os bits dos dois operandos (26 bits no total: 2 bits de sinal, 8 bits de expoente e 16 bits de mantissa). Como a placa DE10-Lite possui apenas 10 chaves deslizantes (`SW`), foi necessário projetar um módulo *Top-Level* (`Trabalho_Final2.vhd`) para fazer a ponte entre o usuário e o somador aritmético principal (`Trabalho_Final.vhd`).
 
-**O que mudamos no VHDL original:**
-* Removemos...
-* Roteamos ...
-* Reorganizamos ...
-
-**Descrição gráfica do sistema**
-* Caso mudar a descrição gráfica feita no item 2, atualizar aqui.
-* Usar as variáveis de entrada e saída especificadas no VHDL.
+**O que mudamos no VHDL original (Integração e Roteamento):**
+* **Implementação de Multiplexação Temporal:** Utilizamos os botões `KEY0` e `KEY1` como sinais de *clock* pontuais (`falling_edge`) para registrar sequencialmente o Operando 1 e o Operando 2 usando as mesmas 10 chaves (`SW`).
+* **Adaptação da Mantissa (Zero-Padding):** Como utilizamos 1 bit para sinal (`SW9`), 4 bits para expoente (`SW8-5`) e restaram apenas 5 bits para a mantissa (`SW4-0`), preenchemos os 3 bits menos significativos exigidos pelo somador original com zeros: `SW(4 downto 0) & "000"`.
+* **Decodificação Visual (Displays de 7 Segmentos):** Roteamos o resultado para a interface física da placa. O bit de sinal acende o `LEDR0`, enquanto a mantissa resultante (8 bits) foi dividida em dois *nibbles* e enviada para o `HEX2` (parte alta) e `HEX1` (parte baixa). O expoente resultante foi mapeado no `HEX0`.
+* **Lógica Anodo Comum:** Desenvolvemos a função interna `hex_to_7seg` respeitando o padrão elétrico dos displays do MAX 10 (onde '0' acende o segmento e '1' o apaga).
 
 ## 4. Evidências de Validação
 
-### Simulação 
-Abaixo, a imagem do funcionamento do 4º estágio (normalização). Considerar os 4 casos detalhados.
+### XXXXXXXXXXXXXXXXXXXXXXX  Simulação XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Abaixo, a imagem do funcionamento das etapas internas do somador, com destaque para o 4º estágio (normalização). Validamos 4 casos fundamentais da aritmética de ponto flutuante: (1) Soma convencional, (2) Geração de *Carry-out* (deslocamento para a direita), (3) Deslocamento para a esquerda (contagem de zeros) e (4) Condição de *Underflow*.
 
 ![Print das Telas do Simulador com as Formas de Onda](link-da-imagem-aqui.jpg)
-
+*(Nota: Substitua o link acima pela imagem gerada no ModelSim/Quartus evidenciando os sinais `sum`, `sum_norm` e `expn`)*
 ### Código VHDL Final
 
-** TrabalhoFinal2.vhd -> Responsável por salvar em memória os dois operandos ao clicar os KEY0 e KEY1 e implementa o Somador Principal (Trabalho_Final.vhd)
+**TrabalhoFinal2.vhd** -> Responsável por salvar em memória os dois operandos ao clicar em KEY0 e KEY1 e instanciar o Somador Principal.
 ```vhdl
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -147,7 +144,7 @@ begin
 end architecture rtl;
 ```
 
-**Trabalho_Final.vhd -> Responsável pela lógica do Somador Principal (É instanciado no Trabalho_Final2.vhdl)
+**Trabalho_Final.vhd -> Responsável pela lógica central (Datapath) do Somador de Ponto Flutuante.
 ```vhdl
 library ieee;
 use ieee.std_logic_1164.all;
@@ -287,26 +284,36 @@ begin
 end arch;
 ```
 
-*Etapa 3*
+### XXXXXXXXXXXXXXXXXXXXFuncionamento na Placa XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Abaixo, imagens do funcionamento na Placa DE10-Lite para 4 casos distintos. As fotos evidenciam a precisão da interface homem-máquina através das chaves (SW), visualizada diretamente nos Displays de 7 segmentos.
 
-### Funcionamento na Placa
-Abaixo, imagens do funcionamento na Placa para 4 casos.
+(Insira aqui as fotos dos 4 testes na placa. Sugestão de legenda para as fotos:)
 
-*Etapa 4 (considerando qeu a Etapa 4 considera toda a documentação em si)*
+Caso 1: Operandos com mesmo expoente (Soma direta).
+
+Caso 2: Operandos com sinais diferentes (Subtração interna).
+
+Caso 3: Necessidade de normalização (Deslocamento).
+
+Caso 4: Teste do bit de sinal (LEDR0 aceso confirmando resultado negativo).
+
+
 ## 5. Diário de Bordo de IA 
-Utilizamos o [ChatGPT/Claude/Gemini] para auxiliar na geração do Testbench e na refatoração do código. Abaixo está a análise crítica do uso da ferramenta.
+Utilizamos IA generativa (Gemini) atuando estritamente como ferramenta de apoio técnico para gerar cenários de testes preliminares e auxiliar no rascunho dos diagramas estruturais, a fim de agilizar a documentação das adaptações implementadas. Abaixo está a análise crítica do uso da ferramenta e como aplicamos correções humanas aos seus resultados.
 
-**Prompts Utilizados:**
-> "Gemini, gere casos de teste pra que eu consiga validar com assertividade que o código que coloquei na placa esta funcionando da forma esperada"
+**Caso 1: Auxílio na Geração de Casos de Teste**
+* **Prompt Utilizado:** "Gemini, por favor gere 4 cenários de teste manuais para que eu consiga validar com assertividade que meu somador de ponto flutuante de 13 bits está funcionando. Preciso de testes que forcem a geração de carry na mantissa, underflow e alinhamento de expoentes distintos."
+* **O Erro da IA (Falta de Contexto Físico):** A IA sugeriu valores de teste perfeitos do ponto de vista teórico para um somador de 8 bits de mantissa. No entanto, ela falhou em considerar a restrição arquitetural do nosso *Top-Level* físico: os testes propostos exigiam entradas como `frac = 10101111`. Isso era fisicamente impossível na nossa montagem, pois limitamos a entrada da mantissa na DE10-Lite a apenas 5 chaves (`SW4` a `SW0`), concatenando estaticamente `000` nos bits menos significativos via código (`SW(4 downto 0) & "000"`). 
+* **A Correção Humana:** Identificamos que as massas de teste da IA não poderiam ser replicadas na placa. O grupo teve que refatorar os casos de teste sugeridos manualmente, truncando a parte menos significativa dos valores e recalculando os resultados esperados levando em consideração apenas valores de mantissa terminados obrigatoriamente em `000`. 
 
-**O Erro da IA (Alucinação):**
-> Descreva aqui o que a IA errou (ex: tentou usar pinos inexistentes, criou clock em testbench de circuito combinacional, etc).
-
-**A Correção Humana:**
-> Como você corrigiu o código gerado para que ele funcionasse na nossa placa e na simulação.
+**Caso 2: Auxílio na Modelagem Visual (Diagramas do Tópico 2)**
+* **Prompt Utilizado:** "Gemini, com base no nosso código VHDL do Top-Level e do Somador, por favor nos ajude a montar um esboço estrutural descrevendo o fluxo do diagrama elétrico e o circuito lógico interno do sistema para usarmos no relatório."
+* **O Erro da IA (Abstração Excessiva):** A ferramenta gerou um excelente esqueleto lógico inicial (que utilizamos como inspiração para as imagens do tópico 2). No entanto, o rascunho da IA era genérico demais. Ele ignorava o acionamento de borda de descida (`falling_edge`) que usamos nos botões da placa e não ilustrava a nossa lógica de Zero-Padding.
+* **A Correção Humana:** Utilizamos a imagem da IA apenas como uma base visual. O grupo mapeou e redesenhou as topologias, corrigindo a largura dos barramentos físicos, documentando os blocos de registradores atrelados aos pinos `KEY0` e `KEY1`, e inserindo os blocos extratores e decodificadores para `HEX0`, `HEX1` e `HEX2`.
 
 ## 6. Contribuição dos participantes
-Utilize a taxonomia CRediT, seguem exemplos:
- * Ricardo Javurek Rihan, Administração do Projeto, Desenvolvimento, implementação e teste de software, Análise Formal, Validação de dados e experimentos
- * Gustavo ruiz Lirola Yokooji, Administração do Projeto, Desenvolvimento,  Análise Formal, Validação de dados e experimentos, Redação do manuscrito original
- * Paloma Valéria Campos de Lima, Administração do Projeto, Desenvolvimento, implementação e teste de software, Validação de dados e experimentos, Redação do manuscrito original
+A divisão de tarefas seguiu a taxonomia CRediT, garantindo contribuição equivalente entre todos os membros do grupo:
+
+* **Ricardo Javurek Rihan:** Administração do Projeto, Desenvolvimento da lógica Top-Level em VHDL, Implementação e teste de hardware (DE10-Lite), Análise Formal, Validação de dados e experimentos.
+* **Gustavo Ruiz Lirola Yokooji:** Administração do Projeto, Desenvolvimento da adaptação da interface com displays de 7 segmentos, Análise Formal, Validação de dados e experimentos, Redação do manuscrito original (Relatório/README).
+* **Paloma Valéria Campos de Lima:** Administração do Projeto, Desenvolvimento da lógica de controle e captura de estados temporais (`falling_edge`), Implementação e teste de hardware, Validação de dados e experimentos, Redação do manuscrito original.
