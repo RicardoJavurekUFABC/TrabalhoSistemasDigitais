@@ -168,7 +168,7 @@ begin
 end architecture rtl;
 ```
 
-**Trabalho_Final.vhd -> Responsável pela lógica central (Datapath) do Somador de Ponto Flutuante.
+**Trabalho_Final.vhd** -> Responsável pela lógica central (Datapath) do Somador de Ponto Flutuante.
 ```vhdl
 library ieee;
 use ieee.std_logic_1164.all;
@@ -307,24 +307,28 @@ begin
 
 end arch;
 ```
+### Funcionamento na Placa
+Abaixo, imagens do funcionamento na Placa DE10-Lite para 4 casos distintos. As fotos evidenciam a precisão da interface homem-máquina através das chaves (`SW`), visualizada diretamente nos Displays de 7 segmentos.
 
-### XXXXXXXXXXXXXXXXXXXXFuncionamento na Placa XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-Abaixo, imagens do funcionamento na Placa DE10-Lite para 4 casos distintos. As fotos evidenciam a precisão da interface homem-máquina através das chaves (SW), visualizada diretamente nos Displays de 7 segmentos.
+**Caso 1: Operandos com mesmo expoente (Soma direta)**
+* **Cálculo:** `16 + 8 = 24`
+* **Saída Esperada:** `C04` (LED apagado)
+<img width="1600" height="1200" alt="Caso 1" src="https://github.com/user-attachments/assets/aad4f75d-8606-4a26-a158-6f5b68b2d0c6" />
 
-(Insira aqui as fotos dos 4 testes na placa. Sugestão de legenda para as fotos:)
+**Caso 2: Operandos com sinais diferentes (Subtração interna)**
+* **Cálculo:** `(-16) + (-16) = -32`
+* **Saída Esperada:** `805` (LED aceso, confirmando resultado negativo)
+<img width="1600" height="1200" alt="Caso 2" src="https://github.com/user-attachments/assets/35ec5369-6b10-4bed-afdd-9e894ef49576" />
 
-Caso 1: Operandos com mesmo expoente (Soma direta).
- 16 + 8 = 24 => C04 apagado
+**Caso 3: Necessidade de normalização (Deslocamento)**
+* **Cálculo:** `32 - 28 = 4`
+* **Saída Esperada:** `802` (LED apagado)
+<img width="1600" height="1200" alt="Caso 3" src="https://github.com/user-attachments/assets/f6413e47-7489-4ba0-94e6-71ff911d1bd8" />
 
-Caso 2: Operandos com sinais diferentes (Subtração interna).
-(-16) + (- 16) = -32 => 805 aceso
-
-Caso 3: Necessidade de normalização (Deslocamento).
-32 - 28 = 4 => 802 apagado
-
-Caso 4: Teste do bit de sinal (LEDR0 aceso confirmando resultado negativo).
-16 - 32 = -16 => 804 aceso
-
+**Caso 4: Teste do bit de sinal**
+* **Cálculo:** `16 - 32 = -16`
+* **Saída Esperada:** `804` (LED aceso, confirmando resultado negativo)
+<img width="1600" height="1200" alt="Caso 4" src="https://github.com/user-attachments/assets/04c778a1-89b9-4846-a8f3-10b8e4ae1a17" />
 
 ## 5. Diário de Bordo de IA 
 Utilizamos IA generativa (Gemini) atuando estritamente como ferramenta de apoio técnico para gerar cenários de testes preliminares. Abaixo está a análise crítica do uso da ferramenta e como aplicamos correções humanas aos seus resultados.
