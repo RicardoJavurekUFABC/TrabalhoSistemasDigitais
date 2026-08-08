@@ -11,10 +11,7 @@
 Este projeto adapta o somador de ponto flutuante simplificado (13 bits) do livro-texto para a placa Terasic DE10-Lite (MAX 10). O objetivo é demonstrar a síntese lógica e a simulação de hardware usando VHDL.
 
 ## 2. Descrição gráfica do funcionamento do sistema
-<img width="1291" height="692" alt="image" src="https://github.com/user-attachments/assets/71b5fb04-97a8-4e8a-972f-61212b9c0027" />
-
-<img width="694" height="922" alt="image" src="https://github.com/user-attachments/assets/8fa43f4e-6417-4d3e-b88a-c2cf24453cee" />
-
+<img width="1787" height="889" alt="image" src="https://github.com/user-attachments/assets/beb1b75c-b2ae-4eda-892a-5852cda15a4d" />
 
 ## 3. Adaptações de Hardware (DE10-Lite)
 A arquitetura original do livro-texto pressupõe a entrada simultânea de todos os bits dos dois operandos (26 bits no total: 2 bits de sinal, 8 bits de expoente e 16 bits de mantissa). Como a placa DE10-Lite possui apenas 10 chaves deslizantes (`SW`), foi necessário projetar um módulo *Top-Level* (`Trabalho_Final2.vhd`) para fazer a ponte entre o usuário e o somador aritmético principal (`Trabalho_Final.vhd`).
@@ -27,11 +24,38 @@ A arquitetura original do livro-texto pressupõe a entrada simultânea de todos 
 
 ## 4. Evidências de Validação
 
-### XXXXXXXXXXXXXXXXXXXXXXX  Simulação XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+### Simulação
 Abaixo, a imagem do funcionamento das etapas internas do somador, com destaque para o 4º estágio (normalização). Validamos 4 casos fundamentais da aritmética de ponto flutuante: (1) Soma convencional, (2) Geração de *Carry-out* (deslocamento para a direita), (3) Deslocamento para a esquerda (contagem de zeros) e (4) Condição de *Underflow*.
 
-![Print das Telas do Simulador com as Formas de Onda](link-da-imagem-aqui.jpg)
-*(Nota: Substitua o link acima pela imagem gerada no ModelSim/Quartus evidenciando os sinais `sum`, `sum_norm` e `expn`)*
+### Descrição dos Casos de Simulação para o Relatório
+
+A simulação temporal do módulo `Trabalho_Final` valida o comportamento do datapath em 4 cenários fundamentais da aritmética de ponto flutuante (intervalos de $100\text{ ns}$):
+
+1. **Intervalo 0 a 100 ns — (1) Soma Convencional (Sem deslocamentos extras):**
+* **Entradas:** $\text{Op1} = +1.0 \times 2^4$ (`exp1 = 4`, `frac1 = 0x80`), $\text{Op2} = +0.5 \times 2^4$ (`exp2 = 4`, `frac2 = 0x40`).
+* **Saídas:** `exp_out = 4`, `frac_out = 0xC0` ($192$ em decimal), `sign_out = 0`.
+* **Análise:** A soma das mantissas resulta em `0x80 + 0x40 = 0xC0`. Como o resultado já está normalizado (bit MSB igual a `'1'`), não há necessidade de ajuste no expoente nem na mantissa.
+
+
+2. **Intervalo 100 a 200 ns — (2) Geração de *Carry-out* (Deslocamento para a Direita):**
+* **Entradas:** $\text{Op1} = -1.0 \times 2^4$ (`sign1 = 1`, `exp1 = 4`, `frac1 = 0x80`), $\text{Op2} = -1.0 \times 2^4$ (`sign2 = 1`, `exp2 = 4`, `frac2 = 0x80`).
+* **Saídas:** `exp_out = 5`, `frac_out = 0x80`, `sign_out = 1`.
+* **Análise:** A soma $0\text{x}80 + 0\text{x}80 = 0\text{x}100$ gera um bit de estouro (*carry* no bit 8 de `sum`). O circuito detecta `sum(8) = '1'`, divide a mantissa por 2 via deslocamento à direita (`0x100 -> 0x80`) e incrementa o expoente de $4$ para **$5$**.
+
+
+3. **Intervalo 200 a 300 ns — (3) Deslocamento para a Esquerda (Contagem de Zeros à Esquerda):**
+* **Entradas:** $\text{Op1} = +1.0 \times 2^5$ (`sign1 = 0`, `exp1 = 5`, `frac1 = 0x80`), $\text{Op2} = -0.875 \times 2^5$ (`sign2 = 1`, `exp2 = 5`, `frac2 = 0x70`).
+* **Saídas:** `exp_out = 2`, `frac_out = 0x80`, `sign_out = 0`.
+* **Análise:** A subtração resulta em $0\text{x}80 - 0\text{x}70 = 0\text{x}10$ (`00010000` em binário). O **4º estágio** (Leading Zero Count — LZC) detecta **3 zeros à esquerda** (`leado = 3`). O circuito desloca a mantissa 3 posições à esquerda (`0x10 -> 0x80`) e reduz o expoente em 3 unidades ($5 - 3 = \mathbf{2}$).
+
+
+4. **Intervalo 300 a 400 ns — (4) Condição de *Underflow* (Anulação Total):**
+* **Entradas:** $\text{Op1} = +1.0 \times 2^1$ (`sign1 = 0`, `exp1 = 1`, `frac1 = 0x80`), $\text{Op2} = -1.0 \times 2^1$ (`sign2 = 1`, `exp2 = 1`, `frac2 = 0x80`).
+* **Saídas:** `exp_out = 0`, `frac_out = 0x00`, `sign_out = 0`.
+* **Análise:** A subtração de valores idênticos resulta em mantissa igual a zero ($0\text{x}80 - 0\text{x}80 = 0$). O detector de zeros calcula `leado = 7`. Como $7 > \text{expb}$ ($7 > 1$), a cláusula `elsif leado > expb` é ativada, acionando a flag de *underflow* e zerando totalmente a saída (`0 0000 00000000`).
+
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/6ba56824-5a5b-47fa-9e6c-b82421631aba" />
+
 ### Código VHDL Final
 
 **TrabalhoFinal2.vhd** -> Responsável por salvar em memória os dois operandos ao clicar em KEY0 e KEY1 e instanciar o Somador Principal.
@@ -290,26 +314,26 @@ Abaixo, imagens do funcionamento na Placa DE10-Lite para 4 casos distintos. As f
 (Insira aqui as fotos dos 4 testes na placa. Sugestão de legenda para as fotos:)
 
 Caso 1: Operandos com mesmo expoente (Soma direta).
+ 16 + 8 = 24 => C04 apagado
 
 Caso 2: Operandos com sinais diferentes (Subtração interna).
+(-16) + (- 16) = -32 => 805 aceso
 
 Caso 3: Necessidade de normalização (Deslocamento).
+32 - 28 = 4 => 802 apagado
 
 Caso 4: Teste do bit de sinal (LEDR0 aceso confirmando resultado negativo).
+16 - 32 = -16 => 804 aceso
 
 
 ## 5. Diário de Bordo de IA 
-Utilizamos IA generativa (Gemini) atuando estritamente como ferramenta de apoio técnico para gerar cenários de testes preliminares e auxiliar no rascunho dos diagramas estruturais, a fim de agilizar a documentação das adaptações implementadas. Abaixo está a análise crítica do uso da ferramenta e como aplicamos correções humanas aos seus resultados.
+Utilizamos IA generativa (Gemini) atuando estritamente como ferramenta de apoio técnico para gerar cenários de testes preliminares. Abaixo está a análise crítica do uso da ferramenta e como aplicamos correções humanas aos seus resultados.
 
-**Caso 1: Auxílio na Geração de Casos de Teste**
+**Auxílio na Geração de Casos de Teste**
 * **Prompt Utilizado:** "Gemini, por favor gere 4 cenários de teste manuais para que eu consiga validar com assertividade que meu somador de ponto flutuante de 13 bits está funcionando. Preciso de testes que forcem a geração de carry na mantissa, underflow e alinhamento de expoentes distintos."
 * **O Erro da IA (Falta de Contexto Físico):** A IA sugeriu valores de teste perfeitos do ponto de vista teórico para um somador de 8 bits de mantissa. No entanto, ela falhou em considerar a restrição arquitetural do nosso *Top-Level* físico: os testes propostos exigiam entradas como `frac = 10101111`. Isso era fisicamente impossível na nossa montagem, pois limitamos a entrada da mantissa na DE10-Lite a apenas 5 chaves (`SW4` a `SW0`), concatenando estaticamente `000` nos bits menos significativos via código (`SW(4 downto 0) & "000"`). 
 * **A Correção Humana:** Identificamos que as massas de teste da IA não poderiam ser replicadas na placa. O grupo teve que refatorar os casos de teste sugeridos manualmente, truncando a parte menos significativa dos valores e recalculando os resultados esperados levando em consideração apenas valores de mantissa terminados obrigatoriamente em `000`. 
 
-**Caso 2: Auxílio na Modelagem Visual (Diagramas do Tópico 2)**
-* **Prompt Utilizado:** "Gemini, com base no nosso código VHDL do Top-Level e do Somador, por favor nos ajude a montar um esboço estrutural descrevendo o fluxo do diagrama elétrico e o circuito lógico interno do sistema para usarmos no relatório."
-* **O Erro da IA (Abstração Excessiva):** A ferramenta gerou um excelente esqueleto lógico inicial (que utilizamos como inspiração para as imagens do tópico 2). No entanto, o rascunho da IA era genérico demais. Ele ignorava o acionamento de borda de descida (`falling_edge`) que usamos nos botões da placa e não ilustrava a nossa lógica de Zero-Padding.
-* **A Correção Humana:** Utilizamos a imagem da IA apenas como uma base visual. O grupo mapeou e redesenhou as topologias, corrigindo a largura dos barramentos físicos, documentando os blocos de registradores atrelados aos pinos `KEY0` e `KEY1`, e inserindo os blocos extratores e decodificadores para `HEX0`, `HEX1` e `HEX2`.
 
 ## 6. Contribuição dos participantes
 A divisão de tarefas seguiu a taxonomia CRediT, garantindo contribuição equivalente entre todos os membros do grupo:
